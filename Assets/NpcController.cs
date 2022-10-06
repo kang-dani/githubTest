@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class NpcController : MonoBehaviour
+public class NpcController : CharacterController
 {
 	[SerializeField] private NavMeshAgent navMeshAgent;
 	[SerializeField] private Animator animator;
-	public Transform target;
+
 	private float findTime = 0f;
+	private float attackTime = 0f;
 	public LayerMask colliderMask;
 
 	private void Awake()
@@ -23,12 +24,14 @@ public class NpcController : MonoBehaviour
 		if (target)
 		{
 			float distance = Vector3.Distance(transform.position, target.position);
-			if(distance < 2f)
+			if (distance < 2f)
 			{
-				navMeshAgent.isStopped = true;
-				transform.LookAt(target);
+				Attack();
 			}
-			else navMeshAgent.isStopped = false;
+			else
+			{
+				navMeshAgent.isStopped = false;
+			}
 
 			navMeshAgent.SetDestination(target.position);
 
@@ -36,25 +39,29 @@ public class NpcController : MonoBehaviour
 		else
 		{
 			findTime += Time.fixedDeltaTime;
-			if(findTime  >= 1f)
+			if (findTime >= 1f)
 			{
-				Collider[] colliders = Physics.OverlapSphere(transform.position, 10f, colliderMask);
-				foreach (Collider collider in colliders)
-				{
-					if(collider.tag == "Player")
-					{
-						target = collider.transform;
-						break;
-					}
-				}
+				FindTarget();
 				findTime = 0f;
 			}
-
-			
 		}
 
 		float speed = navMeshAgent.desiredVelocity.magnitude;
 		animator.SetFloat("Speed", speed);
 	}
+
+	private void Attack()
+	{
+		navMeshAgent.isStopped = true;
+		transform.LookAt(target);
+
+		attackTime += Time.fixedDeltaTime;
+		if (attackTime > 3f)
+		{
+			animator.SetTrigger("Attack");
+			attackTime = 0f;
+		}
+	}
+
 
 }
